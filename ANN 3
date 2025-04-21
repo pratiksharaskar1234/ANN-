@@ -1,0 +1,67 @@
+# Assignment 3: Write a program for producing back propagation feed forward network
+# Name: 
+# Class: TE-AIML
+# Roll No: 
+import numpy as np
+
+# Define the sigmoid activation function
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+# Define the derivative of the sigmoid function
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+# Define the neural network class
+class NeuralNetwork:
+    def __init__(self, input_size, hidden_size, output_size):
+        # Randomly initialize the weights and biases
+        self.weights1 = np.random.randn(input_size, hidden_size)
+        self.weights2 = np.random.randn(hidden_size, output_size)
+        self.bias1 = np.random.randn(1, hidden_size)
+        self.bias2 = np.random.randn(1, output_size)
+
+    def feedforward(self, x):
+        # Calculate the output of the network for a given input
+        self.layer1 = sigmoid(np.dot(x, self.weights1) + self.bias1)
+        self.layer2 = sigmoid(np.dot(self.layer1, self.weights2) + self.bias2)
+        return self.layer2
+
+    def backpropagation(self, x, y, learning_rate):
+        # Calculate the gradients of the weights and biases
+        error = y - self.layer2
+        delta2 = error * sigmoid_derivative(self.layer2)
+        delta1 = np.dot(delta2, self.weights2.T) * sigmoid_derivative(self.layer1)
+        d_weights2 = np.dot(self.layer1.T, delta2)
+        d_weights1 = np.dot(x.T, delta1)
+        d_bias2 = np.sum(delta2, axis=0, keepdims=True)
+        d_bias1 = np.sum(delta1, axis=0, keepdims=True)
+
+        # Update the weights and biases using the gradients and learning rate
+        self.weights2 += learning_rate * d_weights2
+        self.weights1 += learning_rate * d_weights1
+        self.bias2 += learning_rate * d_bias2
+        self.bias1 += learning_rate * d_bias1
+
+    def train(self, x_train, y_train, learning_rate, epochs):
+        # Train the network on a dataset using backpropagation
+        for i in range(epochs):
+            for x, y in zip(x_train, y_train):
+                output = self.feedforward(x.reshape(1, -1))
+                self.backpropagation(x.reshape(1, -1), y.reshape(1, -1), learning_rate)
+            print(f"Epoch {i+1}: Loss {np.mean(np.square(y_train - self.feedforward(x_train)))}")
+
+# Create a neural network with 2 input neurons, 2 hidden neurons, and 1 output neuron
+nn = NeuralNetwork(2, 2, 1)
+
+# Define a dataset to train the network on
+x_train = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+y_train = np.array([[0], [1], [1], [0]])
+
+# Train the network on the dataset for 10000 epochs with a learning rate of 0.1
+nn.train(x_train, y_train, 0.1, 10000)
+
+# Test the network on some new input
+x_test = np.array([[0, 1], [1, 0], [1, 1], [0, 0]])
+print()
+print(nn.feedforward(x_test))
